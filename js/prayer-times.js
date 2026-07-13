@@ -98,12 +98,21 @@
     for (var i = 0; i < ORDER.length; i++) { if (times[ORDER[i]] > nowMin) return { name: ORDER[i], time: times[ORDER[i]], tomorrow: false }; }
     return { name: 'fajr', time: times.fajr, tomorrow: true };
   }
+  function getNextPrayerNoSunrise(times) {
+    var nowMin = new Date().getHours() * 60 + new Date().getMinutes() + new Date().getSeconds() / 60;
+    for (var i = 0; i < ORDER.length; i++) {
+      if (ORDER[i] === 'sunrise') continue;
+      if (times[ORDER[i]] > nowMin) return { name: ORDER[i], time: times[ORDER[i]], tomorrow: false };
+    }
+    return { name: 'fajr', time: times.fajr, tomorrow: true };
+  }
 
   function render() {
     if (!todayData || !el.pills) return;
     var now = new Date();
     var nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
     var np = getNextPrayer(todayData);
+    var npBadge = getNextPrayerNoSunrise(todayData);
     var L = lang();
     var n = L === 'ar' ? NAMES.ar : NAMES.en;
 
@@ -112,7 +121,15 @@
     for (var i = 0; i < ORDER.length; i++) {
       var p = ORDER[i];
       var cls = 'pr-pill';
-      if (p === 'sunrise') { cls += ' pr-sunrise'; }
+      if (p === 'sunrise') {
+        cls += ' pr-sunrise';
+        if (np.name === 'sunrise' && !np.tomorrow) {
+          cls += ' pr-next';
+          var diff = todayData[p] - nowMin;
+          if (diff >= 0 && diff <= 90) cls += ' pr-urgent';
+          hasCurrent = true;
+        }
+      }
       else if (np.name === p && !np.tomorrow) {
         cls += ' pr-next';
         var diff = todayData[p] - nowMin;
@@ -126,10 +143,9 @@
     }
     el.pills.innerHTML = html;
 
-    if (np && !np.tomorrow) {
-      var nextName = np.name === 'sunrise' ? 'fajr' : np.name;
-      el.next.innerHTML = '<span class="pr-next-label">' + (L === 'ar' ? '\u0627\u0644\u0635\u0644\u0627\u0629 \u0627\u0644\u0642\u0627\u062F\u0645\u0629:' : 'Next:') + '</span> <span class="pr-next-name">' + n[nextName] + '</span> <span class="pr-next-time">' + fmt(todayData[np.name]) + '</span>';
-      var diff = todayData[np.name] - nowMin; if (diff < 0) diff = 0;
+    if (npBadge && !npBadge.tomorrow) {
+      el.next.innerHTML = '<span class="pr-next-label">' + (L === 'ar' ? '\u0627\u0644\u0635\u0644\u0627\u0629 \u0627\u0644\u0642\u0627\u062F\u0645\u0629:' : 'Next:') + '</span> <span class="pr-next-name">' + n[npBadge.name] + '</span> <span class="pr-next-time">' + fmt(todayData[npBadge.name]) + '</span>';
+      var diff = todayData[npBadge.name] - nowMin; if (diff < 0) diff = 0;
       el.countdown.innerHTML = '<span class="pr-remaining-label">' + (L === 'ar' ? '\u0627\u0644\u0648\u0642\u062A \u0627\u0644\u0645\u062A\u0628\u0642\u064A: ' : 'Remaining: ') + '</span><span class="pr-remaining-value">' + fmtCountdown(diff) + '</span>';
     } else {
       var fTime = todayData.fajr;
