@@ -1,0 +1,35 @@
+# Deploy to Surge + GitHub Pages on push to main
+# Secrets required:
+#   SURGE_TOKEN   — from `surge token`
+#   GH_TOKEN      — GitHub PAT with repo scope (or use GITHUB_TOKEN with deploy key)
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ── Surge ──────────────────────────────────────────
+      - name: Deploy to Surge
+        run: npx surge --project ./ --domain eng-abdelmoneim-farouq-cv.surge.sh
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      # ── GitHub Pages (via gh-pages branch) ─────────────
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
