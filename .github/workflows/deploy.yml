@@ -82,6 +82,7 @@ jobs:
       - name: Verify all deployments return HTTP 200
         run: |
           urls=(
+            "https://eng-abdelmoneim-farouq-cv.surge.sh"
             "https://eng-abdelmoneim-cv.surge.sh"
             "https://secularway.github.io/abdelmoneim-farouq-cv/"
             "https://eng-abdelmoneim-cv.pages.dev"
